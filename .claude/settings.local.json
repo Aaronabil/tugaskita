@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rtk ls *)",
+      "WebFetch(domain:goey-toast.vercel.app)",
+      "Bash(npm -v)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(npm view *)",
+      "Read(//c/tmp/**)",
+      "Bash(npm pack *)",
+      "Bash(tar -xzf goey-toast-*.tgz)",
+      "Bash(rtk read *)",
+      "Bash(node -e \"let d=JSON.parse\\(require\\('fs'\\).readFileSync\\(0\\)\\);console.log\\(JSON.stringify\\({bin:d.bin,main:d.main,exports:d.exports,files:d.files},null,2\\)\\)\")",
+      "Bash(rtk npx *)",
+      "Bash(rtk proxy *)"
+    ]
+  }
+}
