@@ -12,8 +12,19 @@ import {
   Pencil,
   Check,
   X,
+  Trash2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -32,6 +43,7 @@ import {
   stripExtension,
 } from "@/lib/files";
 import { formatDeadline } from "@/lib/date";
+import { deleteKelompokSubmission } from "@/app/actions";
 import type { Profile, Submission } from "@/lib/types";
 
 type Props = {
@@ -103,7 +115,25 @@ export function UploadZone({
   const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
 
+  // State hapus file kelompok (perwakilan).
+  const [deleteTarget, setDeleteTarget] = useState<Submission | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const isKelompok = !!kelompokId;
+
+  async function handleDeleteFile() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const res = await deleteKelompokSubmission(deleteTarget.id);
+    if (!res.ok) {
+      gooeyToast.error(res.error);
+    } else {
+      gooeyToast.success("File dihapus");
+      router.refresh();
+    }
+    setDeleting(false);
+    setDeleteTarget(null);
+  }
 
   function startEdit() {
     if (!submission) return;
@@ -163,13 +193,17 @@ export function UploadZone({
       }
 
       const ext = getExtension(file.name);
-      // Path storage stabil per user (nama tampil disimpan terpisah di DB),
+      // Individu: path stabil per user (nama tampil disimpan terpisah di DB),
       // sehingga rename cukup update DB tanpa memindah file.
-      const path = buildStoragePath(
-        assignmentId,
-        profile.id,
-        `submission.${ext}`,
-      );
+      // Kelompok: boleh banyak file, jadi path harus unik per file agar tidak
+      // saling menimpa di storage (penting untuk hapus file per-item).
+      const path = isKelompok
+        ? buildStoragePath(
+            assignmentId,
+            profile.id,
+            `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`,
+          )
+        : buildStoragePath(assignmentId, profile.id, `submission.${ext}`);
 
       // Nama file: pakai nama asli yang diupload mahasiswa.
       const fileName = submission
@@ -324,6 +358,15 @@ export function UploadZone({
                     {f.uploaded_at ? ` · ${formatDeadline(f.uploaded_at)}` : ""}
                   </p>
                 </div>
+                {isRepresentative && (
+                  <button
+                    onClick={() => setDeleteTarget(f)}
+                    className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-500"
+                    title="Hapus file"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                )}
               </div>
             ))}
           </motion.div>
@@ -487,6 +530,32 @@ export function UploadZone({
           terlambat oleh ketua/dosen.
         </p>
       )}
+
+      {/* Konfirmasi hapus file kelompok */}
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus file ini?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.file_name} akan dihapus permanen dari kelompok.
+              Tindakan ini tidak bisa dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={handleDeleteFile}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {deleting ? "Menghapus..." : "Hapus"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

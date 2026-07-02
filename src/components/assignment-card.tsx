@@ -14,6 +14,8 @@ type Props = {
   // Untuk kartu ketua: progress upload.
   submitted?: number;
   total?: number;
+  // Satuan yang dihitung: "kelompok" (tugas kelompok) atau "individu".
+  unit?: "kelompok" | "individu";
   // Untuk kartu anggota: apakah aku sudah upload.
   mySubmitted?: boolean;
 };
@@ -23,6 +25,7 @@ export function AssignmentCard({
   role,
   submitted,
   total,
+  unit = "individu",
   mySubmitted,
 }: Props) {
   return (
@@ -66,7 +69,7 @@ export function AssignmentCard({
           {role === "ketua" && (
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground tabular-nums">
               <Users className="size-3.5" />
-              {submitted ?? 0}/{total ?? 0} upload
+              {submitted ?? 0}/{total ?? 0} {unit}
             </span>
           )}
         </div>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { STORAGE_BUCKET } from "@/lib/files";
 
 const CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // tanpa I,O,0,1,L
 
@@ -321,7 +322,7 @@ export async function deleteAssignment(
   return { ok: true, data: { deleted: true } };
 }
 
-/** Kick anggota dari kelompok — hanya perwakilan kelompok itu yang bisa. */
+/** Kick anggota dari kelompok — perwakilan kelompok itu ATAU ketua tugas. */
 export async function kickFromKelompok(
   kelompokId: string,
   targetUserId: string,
@@ -332,19 +333,42 @@ export async function kickFromKelompok(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Belum login" };
 
-  // Cek apakah user adalah perwakilan kelompok ini.
-  const { data: km } = await supabase
-    .from("kelompok_members")
-    .select("is_representative, kelompok_id")
-    .eq("kelompok_id", kelompokId)
-    .eq("user_id", user.id)
+  // Ambil assignment_id + ketua tugas dari kelompok ini.
+  const { data: ak } = await supabase
+    .from("assignment_kelompok")
+    .select("assignment_id, assignments(created_by)")
+    .eq("id", kelompokId)
     .maybeSingle();
 
-  if (!km?.is_representative) {
-    return { ok: false, error: "Hanya perwakilan kelompok yang bisa kick anggota" };
+  if (!ak) return { ok: false, error: "Kelompok tidak ditemukan" };
+
+  const ketuaRel = ak.assignments as
+    | { created_by: string }
+    | { created_by: string }[]
+    | null;
+  const ketuaId = Array.isArray(ketuaRel)
+    ? ketuaRel[0]?.created_by
+    : ketuaRel?.created_by;
+  const isKetua = ketuaId === user.id;
+
+  // Kalau bukan ketua, cek apakah user perwakilan kelompok ini.
+  if (!isKetua) {
+    const { data: km } = await supabase
+      .from("kelompok_members")
+      .select("is_representative")
+      .eq("kelompok_id", kelompokId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!km?.is_representative) {
+      return {
+        ok: false,
+        error: "Hanya perwakilan kelompok atau ketua yang bisa kick anggota",
+      };
+    }
   }
 
-  // Cek apakah target adalah anggota kelompok ini (dan bukan perwakilan juga).
+  // Cek apakah target adalah anggota kelompok ini (dan bukan perwakilan).
   const { data: target } = await supabase
     .from("kelompok_members")
     .select("is_representative")
@@ -368,21 +392,68 @@ export async function kickFromKelompok(
 
   if (error) return { ok: false, error: error.message };
 
-  // Ambil assignment_id buat hapus dari assignment_members.
-  const { data: ak } = await supabase
-    .from("assignment_kelompok")
-    .select("assignment_id")
-    .eq("id", kelompokId)
-    .single();
-
-  if (ak) {
-    await supabase
-      .from("assignment_members")
-      .delete()
-      .eq("assignment_id", ak.assignment_id)
-      .eq("user_id", targetUserId);
-  }
+  await supabase
+    .from("assignment_members")
+    .delete()
+    .eq("assignment_id", ak.assignment_id)
+    .eq("user_id", targetUserId);
 
   revalidatePath("/");
   return { ok: true, data: { kicked: true } };
+}
+
+/**
+ * Hapus satu file submission kelompok — hanya perwakilan kelompok itu.
+ * Membersihkan file di storage lalu baris di tabel submissions.
+ */
+export async function deleteKelompokSubmission(
+  submissionId: string,
+): Promise<ActionResult<{ deleted: boolean }>> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Belum login" };
+
+  // Ambil submission + kelompoknya.
+  const { data: sub } = await supabase
+    .from("submissions")
+    .select("id, kelompok_id, file_path")
+    .eq("id", submissionId)
+    .maybeSingle();
+
+  if (!sub) return { ok: false, error: "File tidak ditemukan" };
+  if (!sub.kelompok_id) {
+    return { ok: false, error: "Bukan file kelompok" };
+  }
+
+  // Cek user adalah perwakilan kelompok ini.
+  const { data: km } = await supabase
+    .from("kelompok_members")
+    .select("is_representative")
+    .eq("kelompok_id", sub.kelompok_id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!km?.is_representative) {
+    return {
+      ok: false,
+      error: "Hanya perwakilan kelompok yang bisa menghapus file",
+    };
+  }
+
+  // Hapus file di storage dulu (best-effort), lalu baris DB.
+  if (sub.file_path) {
+    await supabase.storage.from(STORAGE_BUCKET).remove([sub.file_path]);
+  }
+
+  const { error } = await supabase
+    .from("submissions")
+    .delete()
+    .eq("id", submissionId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/");
+  return { ok: true, data: { deleted: true } };
 }

@@ -50,16 +50,43 @@ export default async function DashboardPage() {
     return map;
   };
 
-  let memberCounts = new Map<string, number>();
-  let subCounts = new Map<string, number>();
+  // Hitung jumlah entitas unik yang sudah upload per assignment.
+  // Individu: distinct user_id (kelompok_id null). Kelompok: distinct kelompok_id.
+  const distinctByAssignment = (
+    rows: { assignment_id: string; key: string | null }[],
+  ): Map<string, number> => {
+    const sets = new Map<string, Set<string>>();
+    for (const r of rows) {
+      if (!r.key) continue;
+      const set = sets.get(r.assignment_id) ?? new Set<string>();
+      set.add(r.key);
+      sets.set(r.assignment_id, set);
+    }
+    return new Map([...sets].map(([id, set]) => [id, set.size]));
+  };
+
+  let memberCounts = new Map<string, number>(); // total member (untuk tugas individu)
+  let kelompokTotals = new Map<string, number>(); // total kelompok (untuk tugas kelompok)
+  let indivSubCounts = new Map<string, number>(); // individu yang sudah upload
+  let kelompokSubCounts = new Map<string, number>(); // kelompok yang sudah upload
   if (managed.length) {
     const ids = managed.map((a) => a.id);
-    const [{ data: mem }, { data: subs }] = await Promise.all([
+    const [{ data: mem }, { data: subs }, { data: kel }] = await Promise.all([
       supabase.from("assignment_members").select("assignment_id").in("assignment_id", ids),
-      supabase.from("submissions").select("assignment_id").in("assignment_id", ids),
+      supabase
+        .from("submissions")
+        .select("assignment_id, user_id, kelompok_id")
+        .in("assignment_id", ids),
+      supabase.from("assignment_kelompok").select("assignment_id").in("assignment_id", ids),
     ]);
     memberCounts = countByAssignment(mem);
-    subCounts = countByAssignment(subs);
+    kelompokTotals = countByAssignment(kel);
+    indivSubCounts = distinctByAssignment(
+      (subs ?? []).map((s) => ({ assignment_id: s.assignment_id, key: s.user_id })),
+    );
+    kelompokSubCounts = distinctByAssignment(
+      (subs ?? []).map((s) => ({ assignment_id: s.assignment_id, key: s.kelompok_id })),
+    );
   }
 
   // Status upload-ku untuk tugas yang aku ikuti
@@ -134,15 +161,27 @@ export default async function DashboardPage() {
               <Crown className="size-4" /> Kelas yang kamu kelola
             </h2>
             <MotionList className="grid gap-4 sm:grid-cols-2">
-              {managed.map((a) => (
-                <AssignmentCard
-                  key={a.id}
-                  assignment={a}
-                  role="ketua"
-                  submitted={subCounts.get(a.id) ?? 0}
-                  total={memberCounts.get(a.id) ?? 0}
-                />
-              ))}
+              {managed.map((a) => {
+                const isKelompok = a.tipe === "kelompok";
+                return (
+                  <AssignmentCard
+                    key={a.id}
+                    assignment={a}
+                    role="ketua"
+                    submitted={
+                      isKelompok
+                        ? kelompokSubCounts.get(a.id) ?? 0
+                        : indivSubCounts.get(a.id) ?? 0
+                    }
+                    total={
+                      isKelompok
+                        ? kelompokTotals.get(a.id) ?? 0
+                        : memberCounts.get(a.id) ?? 0
+                    }
+                    unit={isKelompok ? "kelompok" : "individu"}
+                  />
+                );
+              })}
             </MotionList>
           </section>
         )}

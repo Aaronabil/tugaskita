@@ -56,6 +56,29 @@ export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, ass
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
+  const [kickTarget, setKickTarget] = useState<{
+    kelompokId: string;
+    kelompokNama: string;
+    userId: string;
+    nama: string;
+  } | null>(null);
+  const [kicking, setKicking] = useState(false);
+
+  async function handleKick() {
+    if (!kickTarget) return;
+    setKicking(true);
+    const res = await kickFromKelompok(kickTarget.kelompokId, kickTarget.userId);
+    if (!res.ok) {
+      gooeyToast.error(res.error);
+    } else {
+      gooeyToast.success(
+        `${kickTarget.nama} dikeluarkan dari ${kickTarget.kelompokNama}`,
+      );
+      router.refresh();
+    }
+    setKicking(false);
+    setKickTarget(null);
+  }
 
   const driveLink = generatedLink || gdriveLink;
 
@@ -348,21 +371,15 @@ export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, ass
                         </span>
                         {!m.is_representative && (
                           <button
-                            onClick={async () => {
-                              const res = await kickFromKelompok(
-                                kp.kelompok.id,
-                                m.profile.id,
-                              );
-                              if (!res.ok) {
-                                gooeyToast.error(res.error);
-                              } else {
-                                gooeyToast.success(
-                                  `${m.profile.nama} dikeluarkan dari ${kp.kelompok.nama_kelompok}`,
-                                );
-                                router.refresh();
-                              }
-                            }}
-                            className="ml-2 inline-flex items-center gap-1 text-red-500 hover:text-red-600"
+                            onClick={() =>
+                              setKickTarget({
+                                kelompokId: kp.kelompok.id,
+                                kelompokNama: kp.kelompok.nama_kelompok,
+                                userId: m.profile.id,
+                                nama: m.profile.nama,
+                              })
+                            }
+                            className="ml-2 inline-flex items-center gap-1 text-red-500 hover:text-red-600 cursor-pointer"
                           >
                             <UserX className="size-3" />
                             Kick
@@ -470,6 +487,32 @@ export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, ass
           </AlertDialogContent>
         </AlertDialog>
       </div>
+
+      {/* Konfirmasi kick anggota kelompok */}
+      <AlertDialog
+        open={!!kickTarget}
+        onOpenChange={(open) => !open && setKickTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Keluarkan anggota?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {kickTarget?.nama} akan dikeluarkan dari {kickTarget?.kelompokNama}{" "}
+              dan harus memilih kelompok lagi.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={kicking}
+              onClick={handleKick}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {kicking ? "Mengeluarkan..." : "Keluarkan"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Konfirmasi generate meski ada yang belum upload */}
       <AlertDialog open={showGenerateConfirm} onOpenChange={setShowGenerateConfirm}>

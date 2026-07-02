@@ -85,7 +85,7 @@ export function KelompokInfo({
                       nama: profile.nama,
                     })
                   }
-                  className="inline-flex shrink-0 items-center gap-1 text-xs text-red-500 hover:text-red-600"
+                  className="inline-flex shrink-0 items-center gap-1 text-xs text-red-500 hover:text-red-600 cursor-pointer"
                 >
                   <UserX className="size-3.5" />
                   Kick

@@ -31,7 +31,10 @@
       "Bash(node -e \"console.log\\(require\\('./node_modules/@types/archiver/package.json'\\).version\\)\")",
       "Bash(rm -f src/middleware.ts)",
       "Bash(rtk curl *)",
-      "Bash(node -e \"const h=require\\('fs'\\).readFileSync\\('/tmp/login.html','utf8'\\);const i=h.indexOf\\('<body'\\);console.log\\(h.slice\\(i,i+500\\)\\)\")"
+      "Bash(node -e \"const h=require\\('fs'\\).readFileSync\\('/tmp/login.html','utf8'\\);const i=h.indexOf\\('<body'\\);console.log\\(h.slice\\(i,i+500\\)\\)\")",
+      "PowerShell(npx tsc --noEmit)",
+      "PowerShell(npx next lint --file src/app/actions.ts --file src/components/upload-zone.tsx --file src/components/admin-panel.tsx 2>&1 | Select-Object -First 30)",
+      "PowerShell(npx eslint src/app/actions.ts src/components/upload-zone.tsx src/components/admin-panel.tsx src/app/dashboard/page.tsx 2>&1 | Select-Object -First 40)"
     ]
   }
 }
