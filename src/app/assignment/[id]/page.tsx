@@ -50,7 +50,12 @@ export default async function AssignmentDetailPage({
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (!membership && !isKetua) redirect("/dashboard");
+  if (!membership && !isKetua) {
+    if (isKelompok) {
+      redirect(`/assignment/join?code=${assignment.invite_code}`);
+    }
+    redirect("/dashboard");
+  }
 
   // Submission milikku (individu) atau kelompokku
   const { data: mySub } = await supabase

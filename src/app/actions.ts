@@ -359,7 +359,7 @@ export async function kickFromKelompok(
     return { ok: false, error: "Tidak bisa kick perwakilan kelompok" };
   }
 
-  // Hapus dari kelompok.
+  // Hapus dari kelompok + assignment_members sekalian (biar join ulang).
   const { error } = await supabase
     .from("kelompok_members")
     .delete()
@@ -367,6 +367,21 @@ export async function kickFromKelompok(
     .eq("user_id", targetUserId);
 
   if (error) return { ok: false, error: error.message };
+
+  // Ambil assignment_id buat hapus dari assignment_members.
+  const { data: ak } = await supabase
+    .from("assignment_kelompok")
+    .select("assignment_id")
+    .eq("id", kelompokId)
+    .single();
+
+  if (ak) {
+    await supabase
+      .from("assignment_members")
+      .delete()
+      .eq("assignment_id", ak.assignment_id)
+      .eq("user_id", targetUserId);
+  }
 
   revalidatePath("/");
   return { ok: true, data: { kicked: true } };
