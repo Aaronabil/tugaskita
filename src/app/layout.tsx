@@ -26,6 +26,31 @@ export const metadata: Metadata = {
   title: "TugasKita — Kumpulin tugas tanpa ribet",
   description:
     "Upload tugas secara privat, ketua kelas mengumpulkan semua dan generate satu link untuk dosen. Tanpa takut dicomot.",
+  metadataBase: new URL("https://tugaskita-five.vercel.app"),
+  openGraph: {
+    title: "TugasKita — Kumpulin tugas tanpa ribet",
+    description:
+      "Upload tugas secara privat, ketua kelas mengumpulkan semua dan generate satu link untuk dosen. Tanpa takut dicomot.",
+    url: "https://tugaskita-five.vercel.app",
+    siteName: "TugasKita",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1280,
+        height: 640,
+        alt: "TugasKita — Kumpulin tugas tanpa ribet",
+      },
+    ],
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TugasKita — Kumpulin tugas tanpa ribet",
+    description:
+      "Upload tugas secara privat, ketua kelas mengumpulkan semua dan generate satu link untuk dosen.",
+    images: ["/og-image.jpg"],
+  },
 };
 
 export default function RootLayout({
