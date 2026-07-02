@@ -1,8 +1,20 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { gooeyToast } from "goey-toast";
 import { Crown, UserX } from "lucide-react";
 import { kickFromKelompok } from "@/app/actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Profile } from "@/lib/types";
 
 type Props = {
@@ -18,14 +30,26 @@ export function KelompokInfo({
   anggota,
   kelompokId,
 }: Props) {
-  async function handleKick(userId: string, nama: string) {
-    const res = await kickFromKelompok(kelompokId, userId);
+  const [kickTarget, setKickTarget] = useState<{
+    userId: string;
+    nama: string;
+  } | null>(null);
+  const [kicking, setKicking] = useState(false);
+
+  async function handleKick() {
+    if (!kickTarget) return;
+    setKicking(true);
+    const res = await kickFromKelompok(kelompokId, kickTarget.userId);
     if (!res.ok) {
       gooeyToast.error(res.error);
     } else {
-      gooeyToast.success(`${nama} dikeluarkan dari ${namaKelompok}`);
+      gooeyToast.success(
+        `${kickTarget.nama} dikeluarkan dari ${namaKelompok}`,
+      );
       window.location.reload();
     }
+    setKicking(false);
+    setKickTarget(null);
   }
 
   return (
@@ -54,7 +78,12 @@ export function KelompokInfo({
               </div>
               {isRepresentative && !isRep && (
                 <button
-                  onClick={() => handleKick(profile.id, profile.nama)}
+                  onClick={() =>
+                    setKickTarget({
+                      userId: profile.id,
+                      nama: profile.nama,
+                    })
+                  }
                   className="inline-flex shrink-0 items-center gap-1 text-xs text-red-500 hover:text-red-600"
                 >
                   <UserX className="size-3.5" />
@@ -69,6 +98,31 @@ export function KelompokInfo({
           Belum ada anggota
         </p>
       )}
+
+      <AlertDialog
+        open={!!kickTarget}
+        onOpenChange={(open) => !open && setKickTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Keluarkan anggota?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {kickTarget?.nama} akan dikeluarkan dari {namaKelompok} dan harus
+              memilih kelompok lagi.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={kicking}
+              onClick={handleKick}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {kicking ? "Mengeluarkan..." : "Keluarkan"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

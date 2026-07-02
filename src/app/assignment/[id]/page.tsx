@@ -66,7 +66,6 @@ export default async function AssignmentDetailPage({
   let isRepresentative = false;
   let kelompokSubmissions: Submission[] = [];
   let anggotaKelompokSaya: { profile: Profile; is_representative: boolean }[] = [];
-  let jumlahKelompok = 0;
 
   if (isKelompok) {
     const { data: semuaKelompok } = await supabase
@@ -74,7 +73,6 @@ export default async function AssignmentDetailPage({
       .select("id")
       .eq("assignment_id", id);
     const kelompokIds = (semuaKelompok ?? []).map((k) => k.id);
-    jumlahKelompok = kelompokIds.length;
 
     const { data: km } = kelompokIds.length > 0
       ? await supabase
