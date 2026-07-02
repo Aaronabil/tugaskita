@@ -216,29 +216,45 @@ export function UploadZone({
           gooeyToast.success("File berhasil diupload ke kelompok!");
           router.refresh();
         } else {
-          // Individu: upsert (1 file per user).
-          const { data: saved, error } = await supabase
-            .from("submissions")
-            .upsert(
-              {
+          // Individu: update atau insert (partial unique index gak support upsert).
+          const existingId = submission?.id;
+          if (existingId) {
+            const { data: saved, error } = await supabase
+              .from("submissions")
+              .update({
+                file_path: path,
+                file_name: fileName,
+                file_size: file.size,
+                uploaded_at: new Date().toISOString(),
+              })
+              .eq("id", existingId)
+              .select()
+              .single();
+
+            if (error) throw new Error(error.message);
+            setSubmission(saved as Submission);
+            setSubmittedAt(formatDeadline((saved as Submission).uploaded_at));
+          } else {
+            const { data: saved, error } = await supabase
+              .from("submissions")
+              .insert({
                 assignment_id: assignmentId,
                 user_id: profile.id,
                 file_path: path,
                 file_name: fileName,
                 file_size: file.size,
                 uploaded_at: new Date().toISOString(),
-              },
-              { onConflict: "assignment_id,user_id" },
-            )
-            .select()
-            .single();
+              })
+              .select()
+              .single();
 
-          if (error) throw new Error(error.message);
+            if (error) throw new Error(error.message);
+            setSubmission(saved as Submission);
+            setSubmittedAt(formatDeadline((saved as Submission).uploaded_at));
+          }
 
-          setSubmission(saved as Submission);
-          setSubmittedAt(formatDeadline((saved as Submission).uploaded_at));
           gooeyToast.success(
-            submission ? "Tugas berhasil diperbarui!" : "Tugas berhasil dikumpulkan!",
+            existingId ? "Tugas berhasil diperbarui!" : "Tugas berhasil dikumpulkan!",
           );
           router.refresh();
         }
