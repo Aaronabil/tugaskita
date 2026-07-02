@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { gooeyToast } from "goey-toast";
 import { motion } from "framer-motion";
 import {
@@ -47,6 +47,10 @@ export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, ass
   const [generating, setGenerating] = useState(false);
   const [driveLink, setDriveLink] = useState<string | null>(gdriveLink);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setDriveLink(gdriveLink);
+  }, [gdriveLink]);
   const [linkCopied, setLinkCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);

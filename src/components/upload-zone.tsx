@@ -171,12 +171,10 @@ export function UploadZone({
         `submission.${ext}`,
       );
 
-      // Nama file: untuk kelompok selalu pakai default, untuk individu pertahankan custom.
-      const fileName = isKelompok
-        ? buildSubmissionFileName(profile.nim, profile.nama, file.name)
-        : submission
-          ? renameKeepExtension(file.name, stripExtension(submission.file_name))
-          : buildSubmissionFileName(profile.nim, profile.nama, file.name);
+      // Nama file: pakai nama asli yang diupload mahasiswa.
+      const fileName = submission
+        ? renameKeepExtension(file.name, stripExtension(submission.file_name))
+        : file.name;
 
       setUploading(true);
       setProgress(0);
@@ -459,14 +457,6 @@ export function UploadZone({
           <p className="mt-1 text-xs text-muted-foreground">
             {ALLOWED_EXTENSIONS.join(", ")} · maks {MAX_FILE_SIZE_LABEL}
           </p>
-          {!isKelompok && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Otomatis dinamai{" "}
-              <span className="font-mono text-foreground">
-                {profile.nim}_{profile.nama.split(" ")[0]}
-              </span>
-            </p>
-          )}
 
           <input
             ref={inputRef}
