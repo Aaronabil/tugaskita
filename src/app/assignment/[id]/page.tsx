@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/navbar";
 import { UploadZone } from "@/components/upload-zone";
 import { AdminPanel } from "@/components/admin-panel";
+import { KelompokInfo } from "@/components/kelompok-info";
 import { Countdown } from "@/components/countdown";
 import { Badge } from "@/components/ui/badge";
 import { formatDeadline, getDeadlineStatus } from "@/lib/date";
@@ -64,6 +65,8 @@ export default async function AssignmentDetailPage({
   let userKelompok: { id: string; nama_kelompok: string } | null = null;
   let isRepresentative = false;
   let kelompokSubmissions: Submission[] = [];
+  let anggotaKelompokSaya: { profile: Profile; is_representative: boolean }[] = [];
+  let jumlahKelompok = 0;
 
   if (isKelompok) {
     const { data: semuaKelompok } = await supabase
@@ -71,6 +74,7 @@ export default async function AssignmentDetailPage({
       .select("id")
       .eq("assignment_id", id);
     const kelompokIds = (semuaKelompok ?? []).map((k) => k.id);
+    jumlahKelompok = kelompokIds.length;
 
     const { data: km } = kelompokIds.length > 0
       ? await supabase
@@ -97,6 +101,25 @@ export default async function AssignmentDetailPage({
           .eq("kelompok_id", k.id)
           .order("uploaded_at", { ascending: true });
         kelompokSubmissions = (subs ?? []) as Submission[];
+
+        // Ambil daftar anggota kelompok ini.
+        const { data: kms } = await supabase
+          .from("kelompok_members")
+          .select("user_id, is_representative")
+          .eq("kelompok_id", k.id);
+        const memberIds = (kms ?? []).map((m) => m.user_id);
+        const isRepByUser = new Map<string, boolean>();
+        (kms ?? []).forEach((m) => isRepByUser.set(m.user_id, m.is_representative));
+
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("*")
+          .in("id", memberIds);
+
+        anggotaKelompokSaya = ((profiles ?? []) as Profile[]).map((p) => ({
+          profile: p,
+          is_representative: isRepByUser.get(p.id) ?? false,
+        }));
       }
     }
   }
@@ -266,6 +289,18 @@ export default async function AssignmentDetailPage({
             kelompokSubmissions={kelompokSubmissions}
           />
         </div>
+
+        {/* Info kelompok — semua anggota bisa lihat */}
+        {isKelompok && userKelompok && (
+          <div className="mt-5">
+            <KelompokInfo
+              namaKelompok={userKelompok.nama_kelompok}
+              isRepresentative={isRepresentative}
+              anggota={anggotaKelompokSaya}
+              kelompokId={userKelompok.id}
+            />
+          </div>
+        )}
 
         {/* Panel ketua */}
         {isKetua && (
