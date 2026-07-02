@@ -63,9 +63,14 @@ export type MemberProgress = {
   submission: Submission | null;
 };
 
+export type KelompokProgressMember = {
+  profile: Profile;
+  is_representative: boolean;
+};
+
 // Progress per kelompok — dipakai di admin panel untuk tugas kelompok.
 export type KelompokProgress = {
   kelompok: AssignmentKelompok;
-  members: Profile[];
+  members: KelompokProgressMember[];
   submissions: Submission[];
 };

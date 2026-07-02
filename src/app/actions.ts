@@ -320,3 +320,54 @@ export async function deleteAssignment(
   redirect("/dashboard");
   return { ok: true, data: { deleted: true } };
 }
+
+/** Kick anggota dari kelompok — hanya perwakilan kelompok itu yang bisa. */
+export async function kickFromKelompok(
+  kelompokId: string,
+  targetUserId: string,
+): Promise<ActionResult<{ kicked: boolean }>> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Belum login" };
+
+  // Cek apakah user adalah perwakilan kelompok ini.
+  const { data: km } = await supabase
+    .from("kelompok_members")
+    .select("is_representative, kelompok_id")
+    .eq("kelompok_id", kelompokId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!km?.is_representative) {
+    return { ok: false, error: "Hanya perwakilan kelompok yang bisa kick anggota" };
+  }
+
+  // Cek apakah target adalah anggota kelompok ini (dan bukan perwakilan juga).
+  const { data: target } = await supabase
+    .from("kelompok_members")
+    .select("is_representative")
+    .eq("kelompok_id", kelompokId)
+    .eq("user_id", targetUserId)
+    .maybeSingle();
+
+  if (!target) {
+    return { ok: false, error: "Anggota tidak ditemukan di kelompok ini" };
+  }
+  if (target.is_representative) {
+    return { ok: false, error: "Tidak bisa kick perwakilan kelompok" };
+  }
+
+  // Hapus dari kelompok.
+  const { error } = await supabase
+    .from("kelompok_members")
+    .delete()
+    .eq("kelompok_id", kelompokId)
+    .eq("user_id", targetUserId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/");
+  return { ok: true, data: { kicked: true } };
+}

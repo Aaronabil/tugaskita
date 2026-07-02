@@ -14,6 +14,7 @@ import { formatDeadline, getDeadlineStatus } from "@/lib/date";
 import type {
   Assignment,
   KelompokProgress,
+  KelompokProgressMember,
   MemberProgress,
   Profile,
   Submission,
@@ -118,13 +119,17 @@ export default async function AssignmentDetailPage({
       for (const k of allKelompoks) {
         const { data: kms } = await supabase
           .from("kelompok_members")
-          .select("user_id")
+          .select("user_id, is_representative")
           .eq("kelompok_id", k.id);
+
+        const memberIds = (kms ?? []).map((km) => km.user_id);
+        const isRepByUser = new Map<string, boolean>();
+        (kms ?? []).forEach((km) => isRepByUser.set(km.user_id, km.is_representative));
 
         const { data: profiles } = await supabase
           .from("profiles")
           .select("*")
-          .in("id", (kms ?? []).map((km) => km.user_id));
+          .in("id", memberIds);
 
         const { data: subs } = await supabase
           .from("submissions")
@@ -132,9 +137,14 @@ export default async function AssignmentDetailPage({
           .eq("kelompok_id", k.id)
           .order("uploaded_at", { ascending: true });
 
+        const members: KelompokProgressMember[] = ((profiles ?? []) as Profile[]).map((p) => ({
+          profile: p,
+          is_representative: isRepByUser.get(p.id) ?? false,
+        }));
+
         kelompokProgress.push({
           kelompok: k,
-          members: (profiles ?? []) as Profile[],
+          members,
           submissions: (subs ?? []) as Submission[],
         });
       }

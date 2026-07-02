@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import {
   CheckCircle2,
   XCircle,
+  Crown,
   Download,
   Loader2,
   Copy,
@@ -15,6 +16,7 @@ import {
   Users,
   FileText,
   Trash2,
+  UserX,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -32,7 +34,8 @@ import { Progress } from "@/components/ui/progress";
 import { formatFileSize } from "@/lib/files";
 import { fadeUp, stagger } from "@/components/motion";
 import { deleteAssignment } from "@/app/actions";
-import type { Assignment, KelompokProgress, MemberProgress } from "@/lib/types";
+import { kickFromKelompok } from "@/app/actions";
+import type { Assignment, KelompokProgress, MemberProgress, KelompokProgressMember } from "@/lib/types";
 
 type Props = {
   assignmentId: string;
@@ -50,6 +53,7 @@ export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, ass
   const [linkCopied, setLinkCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
 
   const driveLink = generatedLink || gdriveLink;
 
@@ -59,6 +63,7 @@ export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, ass
     ? (kelompokProgress?.filter((kp) => kp.submissions.length > 0).length ?? 0)
     : progress.filter((p) => p.submission).length;
   const pct = total ? Math.round((submitted / total) * 100) : 0;
+  const pending = total - submitted;
 
   async function copyCode() {
     await navigator.clipboard.writeText(inviteCode);
@@ -113,6 +118,14 @@ export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, ass
     } finally {
       setGenerating(false);
     }
+  }
+
+  function handleGenerateClick(force = false) {
+    if (pending > 0 && !force) {
+      setShowGenerateConfirm(true);
+      return;
+    }
+    generateDriveLink(force);
   }
 
   async function downloadZip() {
@@ -211,7 +224,7 @@ export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, ass
             </div>
           ) : (
             <Button
-              onClick={() => generateDriveLink(false)}
+              onClick={() => handleGenerateClick(false)}
               disabled={generating || submitted === 0}
             >
               {generating ? (
@@ -318,10 +331,48 @@ export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, ass
               </div>
 
               {/* Anggota */}
-              <div className="mt-2 text-xs text-muted-foreground">
+              <div className="mt-2 space-y-1">
                 {kp.members.length > 0
-                  ? kp.members.map((m) => m.nama).join(", ")
-                  : "Belum ada anggota"}
+                  ? kp.members.map((m) => (
+                      <div
+                        key={m.profile.id}
+                        className="flex items-center justify-between text-xs"
+                      >
+                        <span className="text-muted-foreground">
+                          {m.profile.nama}
+                          {m.is_representative && (
+                            <Crown className="ml-1 inline size-3 text-amber-500" />
+                          )}
+                        </span>
+                        {!m.is_representative && (
+                          <button
+                            onClick={async () => {
+                              const res = await kickFromKelompok(
+                                kp.kelompok.id,
+                                m.profile.id,
+                              );
+                              if (!res.ok) {
+                                gooeyToast.error(res.error);
+                              } else {
+                                gooeyToast.success(
+                                  `${m.profile.nama} dikeluarkan dari ${kp.kelompok.nama_kelompok}`,
+                                );
+                                window.location.reload();
+                              }
+                            }}
+                            className="ml-2 inline-flex items-center gap-1 text-red-500 hover:text-red-600"
+                          >
+                            <UserX className="size-3" />
+                            Kick
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  : (
+                    <span className="text-xs text-muted-foreground">
+                      Belum ada anggota
+                    </span>
+                  )}
               </div>
 
               {/* Daftar file */}
@@ -417,6 +468,32 @@ export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, ass
           </AlertDialogContent>
         </AlertDialog>
       </div>
+
+      {/* Konfirmasi generate meski ada yang belum upload */}
+      <AlertDialog open={showGenerateConfirm} onOpenChange={setShowGenerateConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Yakin generate link?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Masih ada{" "}
+              <strong>{pending}</strong>{" "}
+              {isKelompok ? "kelompok yang belum upload" : "anggota yang belum upload"}.
+              Link Drive akan dibuat tanpa file mereka.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowGenerateConfirm(false);
+                generateDriveLink(false);
+              }}
+            >
+              Lanjutkan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
