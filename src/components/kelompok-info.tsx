@@ -30,6 +30,7 @@ export function KelompokInfo({
   anggota,
   kelompokId,
 }: Props) {
+  const router = useRouter();
   const [kickTarget, setKickTarget] = useState<{
     userId: string;
     nama: string;
@@ -46,7 +47,7 @@ export function KelompokInfo({
       gooeyToast.success(
         `${kickTarget.nama} dikeluarkan dari ${namaKelompok}`,
       );
-      window.location.reload();
+      router.refresh();
     }
     setKicking(false);
     setKickTarget(null);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { gooeyToast } from "goey-toast";
 import { motion } from "framer-motion";
 import {
@@ -47,6 +48,7 @@ type Props = {
 };
 
 export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, assignment, kelompokProgress }: Props) {
+  const router = useRouter();
   const [generating, setGenerating] = useState(false);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -357,7 +359,7 @@ export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, ass
                                 gooeyToast.success(
                                   `${m.profile.nama} dikeluarkan dari ${kp.kelompok.nama_kelompok}`,
                                 );
-                                window.location.reload();
+                                router.refresh();
                               }
                             }}
                             className="ml-2 inline-flex items-center gap-1 text-red-500 hover:text-red-600"

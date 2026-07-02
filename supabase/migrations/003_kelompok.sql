@@ -112,6 +112,12 @@ create policy "km_delete_self_or_owner"
       join public.assignments a on a.id = ak.assignment_id
       where ak.id = kelompok_id and a.created_by = (select auth.uid())
     )
+    or exists (
+      select 1 from public.kelompok_members rep
+      where rep.kelompok_id = kelompok_members.kelompok_id
+        and rep.user_id = (select auth.uid())
+        and rep.is_representative = true
+    )
   );
 
 -- 8) Update RLS submissions — anggota kelompok juga bisa lihat submission kelompoknya

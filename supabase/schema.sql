@@ -292,7 +292,7 @@ create policy "km_insert_self"
   to authenticated
   with check (user_id = (select auth.uid()));
 
--- User boleh keluar sendiri; ketua tugas boleh hapus anggota kelompok.
+-- User boleh keluar sendiri; ketua tugas boleh hapus anggota kelompok; perwakilan boleh hapus anggota.
 drop policy if exists "km_delete_self_or_owner" on public.kelompok_members;
 create policy "km_delete_self_or_owner"
   on public.kelompok_members for delete
@@ -304,6 +304,13 @@ create policy "km_delete_self_or_owner"
       join public.assignments a on a.id = ak.assignment_id
       where ak.id = kelompok_id and a.created_by = (select auth.uid())
     )
+    or exists (
+      select 1 from public.kelompok_members rep
+      where rep.kelompok_id = kelompok_members.kelompok_id
+        and rep.user_id = (select auth.uid())
+        and rep.is_representative = true
+    )
+  );
   );
 
 -- submissions ---------------------------------------------------------------
