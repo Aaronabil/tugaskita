@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { gooeyToast } from "goey-toast";
 import { motion } from "framer-motion";
 import {
@@ -45,15 +45,13 @@ type Props = {
 
 export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, assignment, kelompokProgress }: Props) {
   const [generating, setGenerating] = useState(false);
-  const [driveLink, setDriveLink] = useState<string | null>(gdriveLink);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    setDriveLink(gdriveLink);
-  }, [gdriveLink]);
   const [linkCopied, setLinkCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const driveLink = generatedLink || gdriveLink;
 
   const isKelompok = assignment?.tipe === "kelompok" && !!kelompokProgress;
   const total = isKelompok ? (kelompokProgress?.length ?? 0) : progress.length;
@@ -100,7 +98,7 @@ export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, ass
         return;
       }
 
-      setDriveLink(data.link);
+      setGeneratedLink(data.link);
       gooeyToast.success("Folder Google Drive berhasil dibuat!");
       if (data.warnings?.length) {
         gooeyToast.warning(
