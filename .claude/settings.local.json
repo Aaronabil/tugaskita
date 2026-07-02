@@ -12,7 +12,26 @@
       "Bash(rtk read *)",
       "Bash(node -e \"let d=JSON.parse\\(require\\('fs'\\).readFileSync\\(0\\)\\);console.log\\(JSON.stringify\\({bin:d.bin,main:d.main,exports:d.exports,files:d.files},null,2\\)\\)\")",
       "Bash(rtk npx *)",
-      "Bash(rtk proxy *)"
+      "Bash(rtk proxy *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\);console.log\\('next',p.dependencies.next,'| react',p.dependencies.react\\)\")",
+      "Bash(yes '')",
+      "Bash(node -e \"console.log\\(JSON.stringify\\(require\\('./tsconfig.json'\\).compilerOptions.paths\\)\\)\")",
+      "Read(//tmp/**)",
+      "Bash(rtk grep *)",
+      "Bash(node -e \"const s=require\\('fs'\\).readFileSync\\('src/lib/files.ts','utf8'\\);const l=s.split\\('\\\\n'\\).find\\(x=>x.includes\\('diakritik'\\)\\);console.log\\(JSON.stringify\\(l\\)\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"const p=require\\('./node_modules/@supabase/ssr/package.json'\\);console.log\\('@supabase/ssr',p.version\\)\")",
+      "Bash(node -e \"const p=require\\('./node_modules/@supabase/supabase-js/package.json'\\);console.log\\('supabase-js',p.version\\)\")",
+      "Bash(node -e \"const p=require\\('./node_modules/framer-motion/package.json'\\);console.log\\('framer-motion',p.version\\)\")",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(node -e \"const t=require\\('./tsconfig.json'\\).compilerOptions;console.log\\('esModuleInterop',t.esModuleInterop,'| module',t.module,'| moduleResolution',t.moduleResolution\\)\")",
+      "Bash(rtk wc *)",
+      "Bash(awk 'NR>=1 && NR<=40 && \\(/function/ || /Format/ || /overload/ || /\\\\\\(options/ || /: Archiver/\\)' node_modules/@types/archiver/index.d.ts)",
+      "Bash(node -e \"const p=require\\('./node_modules/archiver/package.json'\\);console.log\\('archiver',p.version,'| types:',p.types||p.typings||'none'\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/@types/archiver/package.json'\\).version\\)\")",
+      "Bash(rm -f src/middleware.ts)",
+      "Bash(rtk curl *)",
+      "Bash(node -e \"const h=require\\('fs'\\).readFileSync\\('/tmp/login.html','utf8'\\);const i=h.indexOf\\('<body'\\);console.log\\(h.slice\\(i,i+500\\)\\)\")"
     ]
   }
 }
