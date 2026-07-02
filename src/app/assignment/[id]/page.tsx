@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Crown, CalendarClock, Users } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/navbar";
