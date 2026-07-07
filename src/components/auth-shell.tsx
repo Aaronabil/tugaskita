@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { type ReactNode } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 /** Kerangka kartu untuk halaman login & register. */
 export function AuthShell({
@@ -15,6 +16,9 @@ export function AuthShell({
 }) {
   return (
     <main className="relative flex flex-1 items-center justify-center overflow-hidden px-6 py-12">
+      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+        <ThemeToggle />
+      </div>
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(50%_50%_at_50%_0%,color-mix(in_oklch,var(--primary)_16%,transparent),transparent)]"

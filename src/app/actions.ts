@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { STORAGE_BUCKET } from "@/lib/files";
 
@@ -318,7 +317,6 @@ export async function deleteAssignment(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/dashboard");
-  redirect("/dashboard");
   return { ok: true, data: { deleted: true } };
 }
 

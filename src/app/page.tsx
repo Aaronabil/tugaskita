@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ShieldCheck, UploadCloud, FolderArchive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MotionList, MotionItem } from "@/components/motion";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function LandingPage() {
   return (
@@ -16,7 +17,8 @@ export default function LandingPage() {
         <span className="font-heading text-lg font-extrabold tracking-tight">
           Tugas<span className="text-primary">Kita</span>
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
           <Button asChild variant="ghost" size="sm">
             <Link href="/login">Masuk</Link>
           </Button>

@@ -193,9 +193,16 @@ export function AdminPanel({ assignmentId, inviteCode, progress, gdriveLink, ass
   async function handleDelete() {
     setDeleting(true);
     const res = await deleteAssignment(assignmentId);
-    // Kalau sampai sini berarti error (redirect sukses ga balik ke sini)
-    if (!res.ok) gooeyToast.error(res.error);
     setDeleting(false);
+
+    if (!res.ok) {
+      gooeyToast.error(res.error);
+      return;
+    }
+
+    gooeyToast.success("Kelas berhasil dihapus");
+    router.push("/dashboard");
+    router.refresh();
   }
 
   return (

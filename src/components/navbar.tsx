@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Profile } from "@/lib/types";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Navbar({ profile }: { profile: Profile }) {
   const router = useRouter();
@@ -43,7 +44,9 @@ export function Navbar({ profile }: { profile: Profile }) {
           Tugas<span className="text-primary">Kita</span>
         </Link>
 
-        <DropdownMenu>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="gap-2">
               <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
@@ -74,7 +77,8 @@ export function Navbar({ profile }: { profile: Profile }) {
               Keluar
             </DropdownMenuItem>
           </DropdownMenuContent>
-        </DropdownMenu>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );
