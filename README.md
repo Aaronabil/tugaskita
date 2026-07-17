@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TugasKita
 
-## Getting Started
+Platform kolaborasi tugas kuliah. Dosen/buat tugas, invite teman via kode, upload file, dan kelola semuanya dari satu dashboard.
 
-First, run the development server:
+## Fitur
+
+- **Tugas Individu & Kelompok** — buat tugas dengan tipe individu atau kelompok (otomatis bagi anggota)
+- **Kode Invite** — gabung ke tugas pakai kode 8 karakter, tanpa perlu daftar ulang
+- **Upload File** — drag & drop file tugas, langsung tersimpan di Supabase Storage
+- **Google Drive Integration** — generate folder Drive otomatis per tugas, share link ke dosen
+- **Dashboard Ketua** — lihat progress submission semua anggota secara real-time
+- **Kelompok Management** — atur kelompok, pilih perwakilan, track submission per kelompok
+- **Dark Mode** — support light/dark theme
+
+## Stack
+
+| Layer | Teknologi |
+|-------|-----------|
+| Framework | Next.js 16 (App Router) |
+| UI | React 19, Tailwind CSS, shadcn/ui, Framer Motion |
+| Database | Supabase (PostgreSQL) |
+| Auth | Supabase Auth |
+| Storage | Supabase Storage |
+| Cloud Storage | Google Drive API |
+| Deploy | Vercel |
+
+## Struktur Database
+
+```
+profiles          → data user (nama, nim, role)
+assignments       → tugas (kelas, deadline, tipe, kode invite)
+assignment_members → siapa yang join ke tugas mana
+assignment_kelompok → kelompok untuk tugas bertipe kelompok
+kelompok_members  → anggota dalam kelompok
+submissions       → file yang diupload user
+```
+
+## Setup
+
+### 1. Clone & Install
+
+```bash
+git clone https://github.com/Aaronabil/tugaskita.git
+cd tugaskita
+npm install
+```
+
+### 2. Environment Variables
+
+Buat file `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxxxx
+SUPABASE_SERVICE_ROLE_KEY=eyJxxxx
+GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=xxxx
+```
+
+### 3. Database Setup
+
+Jalankan SQL schema di Supabase Dashboard > SQL Editor:
+
+```bash
+# Schema utama
+cat supabase/schema.sql
+
+# Migrations (jalankan urut)
+cat supabase/migrations/001_gdrive.sql
+cat supabase/migrations/002_google_tokens.sql
+cat supabase/migrations/003_kelompok.sql
+```
+
+### 4. Jalankan
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Deploy ke Vercel:
 
-## Learn More
+```bash
+npx vercel
+```
 
-To learn more about Next.js, take a look at the following resources:
+Tambahkan environment variables di Vercel Dashboard > Settings > Environment Variables.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Private
