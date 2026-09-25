@@ -44,8 +44,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/preview.png",
-        width: 1280,
-        height: 640,
+        width: 1200,
+        height: 630,
         alt: "TugasKita — Kumpulin tugas tanpa ribet",
       },
     ],
