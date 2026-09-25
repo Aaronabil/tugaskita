@@ -1,14 +1,23 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Route yang boleh diakses tanpa login.
-const PUBLIC_PATHS = ["/", "/login", "/register"];
+// Tambahkan /reset-password dan /auth/callback ke whitelist
+const PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+];
 
-/**
- * Refresh session Supabase di setiap request + proteksi route.
- * Dipanggil dari src/middleware.ts.
- */
 export async function updateSession(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+
+  // 1. Lewati route handler auth callback dan API internal
+  if (path.startsWith("/auth/") || path.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -32,22 +41,21 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // PENTING: jangan sisipkan logika di antara createServerClient dan getUser().
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const path = request.nextUrl.pathname;
-  const isPublic = PUBLIC_PATHS.includes(path);
+  const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
 
-  // Belum login & buka halaman privat -> ke /login
+  // Belum login & buka halaman privat -> arahkan ke /login
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // Sudah login & buka /login atau /register -> ke /dashboard
+  // Sudah login & buka /login atau /register -> arahkan ke /dashboard
+  // Catatan: jangan redirect jika sedang membuka /reset-password
   if (user && (path === "/login" || path === "/register")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
